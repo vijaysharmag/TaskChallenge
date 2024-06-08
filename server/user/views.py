@@ -41,6 +41,28 @@ class LoginView(generics.GenericAPIView):
     serializer_class = serializers.LoginSerializer
     permission_classes = [AllowAny]  # No permissions required
     
+    @swagger_auto_schema(
+        request_body=serializers.LoginSerializer,
+        responses={
+            200: openapi.Response(
+                description="Login successful",
+                examples={
+                    "application/json": {
+                        "access_token": "jwt_access_token",
+                        "refresh_token": "jwt_refresh_token"
+                    }
+                }
+            ),
+            401: openapi.Response(
+                description="Email or Password is incorrect!",
+                examples={
+                    "application/json": {
+                        "detail": "Email or Password is incorrect!"
+                    }
+                }
+            )
+        }
+    )
 
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -83,6 +105,28 @@ class RegisterView(generics.CreateAPIView):
     serializer_class = serializers.RegistrationSerializer
     permission_classes = [AllowAny]
 
+    @swagger_auto_schema(
+        request_body=serializers.RegistrationSerializer,
+        responses={
+            201: openapi.Response(
+                description="Registration successful",
+                examples={
+                    "application/json": {
+                        "detail": "Registered!"
+                    }
+                }
+            ),
+            400: openapi.Response(
+                description="Invalid credentials!",
+                examples={
+                    "application/json": {
+                        "detail": "Invalid credentials!"
+                    }
+                }
+            )
+        }
+    )
+
     def perform_create(self, serializer):
         user = serializer.save()
         if user is not None:
@@ -94,6 +138,27 @@ class RegisterView(generics.CreateAPIView):
 class LogoutView(generics.GenericAPIView):
 
     permission_classes = [IsAuthenticated]
+
+    @swagger_auto_schema(
+        responses={
+            200: openapi.Response(
+                description="Successfully logged out",
+                examples={
+                    "application/json": {
+                        "detail": "Successfully logged out!"
+                    }
+                }
+            ),
+            400: openapi.Response(
+                description="Invalid token",
+                examples={
+                    "application/json": {
+                        "detail": "Invalid token: {error_message}"
+                    }
+                }
+            )
+        }
+    )
 
     def post(self, request, *args, **kwargs):
         try:
@@ -132,6 +197,27 @@ class CookieTokenRefreshSerializer(jwt_serializers.TokenRefreshSerializer):
 
 class CookieTokenRefreshView(jwt_views.TokenRefreshView):
     serializer_class = CookieTokenRefreshSerializer
+
+    @swagger_auto_schema(
+        responses={
+            200: openapi.Response(
+                description="Token refresh successful",
+                examples={
+                    "application/json": {
+                        "access": "jwt_access_token"
+                    }
+                }
+            ),
+            400: openapi.Response(
+                description="Token refresh failed",
+                examples={
+                    "application/json": {
+                        "detail": "Invalid token or token expired"
+                    }
+                }
+            )
+        }
+    )
 
     def finalize_response(self, request, response, *args, **kwargs):
         if response.data.get("refresh"):
